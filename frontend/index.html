@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Сервис бронирования отелей</title>
+  <style>
+    :root {
+      --primary: #1d4ed8;
+      --primary-hover: #1e40af;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --danger: #dc2626;
+      --danger-hover: #b91c1c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 30px 15px;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .container { max-width: 1100px; margin: 0 auto; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    h1 { margin: 0; font-size: 26px; font-weight: 700; }
+    .btn-links a {
+      margin-left: 8px;
+      padding: 8px 14px;
+      background: #e2e8f0;
+      color: #334155;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    .btn-links a:hover { background: #cbd5e1; }
+    .btn-admin {
+      background: #0284c7 !important;
+      color: white !important;
+    }
+    .btn-admin:hover {
+      background: #0369a1 !important;
+    }
+    
+    .section-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin: 30px 0 16px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    /* Карточки отелей */
+    .hotels-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    .hotel-card {
+      background: var(--card-bg);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.06);
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .hotel-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 14px -2px rgba(0,0,0,0.1);
+    }
+    .hotel-img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      background: #cbd5e1;
+    }
+    .hotel-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+    .hotel-name { font-size: 17px; font-weight: 700; margin: 0 0 6px 0; }
+    .hotel-location { font-size: 13px; color: var(--text-muted); margin-bottom: 10px; }
+    .hotel-desc { font-size: 13px; color: #475569; margin-bottom: 12px; flex-grow: 1; }
+    .hotel-rates {
+      font-size: 12px;
+      background: #f8fafc;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      margin-bottom: 14px;
+    }
+    .btn-select {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 9px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .btn-select:hover { background: var(--primary-hover); }
+
+    /* Форма бронирования */
+    .booking-section {
+      background: var(--card-bg);
+      border-radius: 10px;
+      padding: 24px;
+      margin-top: 30px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    label { font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block; }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .button-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .btn-submit {
+      background: #16a34a;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .btn-submit:hover { background: #15803d; }
+    .btn-estimate {
+      background: #0284c7;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .btn-estimate:hover { background: #0369a1; }
+    #bookingStatus {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      line-height: 1.5;
+      display: none;
+    }
+
+    /* Таблица бронирований */
+    .table-container {
+      background: var(--card-bg);
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 24px;
+      border: 1px solid var(--border);
+      overflow-x: auto;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background: #f8fafc; font-weight: 600; color: #475569; }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #e0e7ff;
+      color: #3730a3;
+      text-transform: capitalize;
+    }
+    .btn-delete-item {
+      background: #fee2e2;
+      color: var(--danger);
+      border: 1px solid #fecaca;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .btn-delete-item:hover {
+      background: var(--danger);
+      color: white;
+    }
+    .stats-bar {
+      display: none;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin-bottom: 14px;
+      font-size: 14px;
+    }
+    
+    /* Маскирование ПДн */
+    .masked-guest {
+      font-family: inherit;
+      color: #334155;
+      letter-spacing: 0.5px;
+    }
+    .blur-mode .masked-guest {
+      filter: blur(4px);
+      user-select: none;
+      transition: filter 0.2s;
+    }
+    .blur-mode .masked-guest:hover {
+      filter: none;
+    }
+    .privacy-toggle {
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--primary);
+      text-decoration: underline;
+      margin-left: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Сервис бронирования отелей</h1>
+      </div>
+      <div class="btn-links">
+        <a href="admin.html" class="btn-admin">Управление отелями</a>
+        <a href="http://localhost:8000/docs" target="_blank">Backend Swagger</a>
+        <a href="http://localhost:5000/docs" target="_blank">Web-Service Swagger</a>
+      </div>
+    </header>
+
+    <!-- Секция карточек отелей -->
+    <div class="section-title">
+      <span>Каталог отелей</span>
+    </div>
+    <div class="hotels-grid" id="hotelsGrid">
+      <div style="color: var(--text-muted);">Загрузка отелей...</div>
+    </div>
+
+    <!-- Форма расчета и бронирования -->
+    <div class="booking-section">
+      <h3 style="margin-top:0;">Оформление и расчет проживания</h3>
+      <div class="form-grid">
+        <div>
+          <label>Выбранный отель:</label>
+          <select id="selectedHotel"></select>
+        </div>
+        <div>
+          <label>ФИО гостя:</label>
+          <input type="text" id="guestName" placeholder="Иванов Иван Иванович" required>
+        </div>
+        <div>
+          <label>Категория номера:</label>
+          <select id="roomType">
+            <option value="standard">Standard</option>
+            <option value="deluxe">Deluxe</option>
+            <option value="suite">Suite</option>
+          </select>
+        </div>
+        <div>
+          <label>Дата заезда:</label>
+          <input type="date" id="checkIn" required>
+        </div>
+        <div>
+          <label>Дата выезда:</label>
+          <input type="date" id="checkOut" required>
+        </div>
+      </div>
+      
+      <div class="button-group">
+        <!-- Кнопка вызова Web-сервиса (без палящих приставок "Кнопка 2") -->
+        <button class="btn-estimate" onclick="calculateEstimate()">⚡ Рассчитать стоимость</button>
+        <!-- Кнопка бронирования -->
+        <button class="btn-submit" onclick="submitBooking()">Забронировать</button>
+      </div>
+      
+      <div id="bookingStatus"></div>
+    </div>
+
+    <!-- Таблица журнала бронирований (без палящих подписей "Кнопка 1") -->
+    <div class="table-container">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+        <div>
+          <h3 style="margin: 0;">Журнал бронирований номеров</h3>
+          <span style="font-size: 13px; color: var(--text-muted);">
+            Конфиденциальность: <span class="privacy-toggle" onclick="togglePrivacy()">переключить маскирование ПДн</span>
+          </span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-select" style="background: #0d9488;" onclick="loadStats()">Финансовая аналитика</button>
+          <!-- Кнопка обновления из БД -->
+          <button class="btn-select" style="background: #475569;" onclick="loadBookings()">Обновить журнал</button>
+        </div>
+      </div>
+
+      <!-- Панель отображения статистики -->
+      <div id="statsBar" class="stats-bar"></div>
+
+      <table id="bookingsTable" class="blur-mode">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Отель</th>
+            <th>Гость (ПДн)</th>
+            <th>Категория</th>
+            <th>Период</th>
+            <th>Итоговая сумма</th>
+            <th>Действие</th>
+          </tr>
+        </thead>
+        <tbody id="bookingsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const BACKEND_URL = 'http://localhost:8000';
+    let loadedHotels = [];
+
+    // Маскирование ФИО (например: "Иванов И. И." или "Ф** Ф.")
+    function maskName(fullName) {
+      if (!fullName) return '';
+      const parts = fullName.trim().split(/\s+/);
+      if (parts.length === 1) {
+        const p = parts[0];
+        return p.length > 2 ? p[0] + '*'.repeat(p.length - 2) + p[p.length - 1] : p;
+      }
+      return parts.map((p, idx) => {
+        if (idx === 0) {
+          return p.length > 2 ? p[0] + '*'.repeat(p.length - 2) + p[p.length - 1] : p;
+        }
+        return p[0].toUpperCase() + '.';
+      }).join(' ');
+    }
+
+    function togglePrivacy() {
+      const table = document.getElementById('bookingsTable');
+      table.classList.toggle('blur-mode');
+    }
+
+    async function loadHotels() {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/hotels`);
+        loadedHotels = await res.json();
+        renderHotels(loadedHotels);
+        populateHotelSelect(loadedHotels);
+      } catch (err) {
+        document.getElementById('hotelsGrid').innerHTML = '<div style="color:red">Не удалось загрузить каталог: ' + err.message + '</div>';
+      }
+    }
+
+    function renderHotels(hotels) {
+      const grid = document.getElementById('hotelsGrid');
+      grid.innerHTML = '';
+      hotels.forEach(h => {
+        const card = document.createElement('div');
+        card.className = 'hotel-card';
+        card.innerHTML = `
+          <img class="hotel-img" src="${h.image_url}" alt="${h.name}">
+          <div class="hotel-body">
+            <h4 class="hotel-name">${h.name} ${'⭐'.repeat(h.stars)}</h4>
+            <div class="hotel-location">📍 ${h.city}</div>
+            <div class="hotel-desc">${h.description}</div>
+            <div class="hotel-rates">
+              <div>• Standard: <b>${h.price_standard} ₽/сут</b></div>
+              <div>• Deluxe: <b>${h.price_deluxe} ₽/сут</b></div>
+              <div>• Suite: <b>${h.price_suite} ₽/сут</b></div>
+            </div>
+            <button class="btn-select" onclick="selectHotel(${h.id})">Выбрать отель</button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function populateHotelSelect(hotels) {
+      const sel = document.getElementById('selectedHotel');
+      sel.innerHTML = '';
+      hotels.forEach(h => {
+        const opt = document.createElement('option');
+        opt.value = h.id;
+        opt.textContent = `${h.name} (${h.city})`;
+        sel.appendChild(opt);
+      });
+    }
+
+    function selectHotel(id) {
+      document.getElementById('selectedHotel').value = id;
+      document.querySelector('.booking-section').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Запрос данных журнала из БД через Backend (Кнопка 1 по заданию)
+    async function loadBookings() {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/bookings`);
+        const data = await res.json();
+        const tbody = document.getElementById('bookingsBody');
+        tbody.innerHTML = '';
+        if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #94a3b8;">Записей пока нет</td></tr>';
+          return;
+        }
+        data.forEach(item => {
+          const masked = maskName(item.guest_name);
+          tbody.innerHTML += `
+            <tr>
+              <td>#${item.id}</td>
+              <td><b>${item.hotel_name}</b></td>
+              <td><span class="masked-guest" title="Наведите для просмотра">${masked}</span></td>
+              <td><span class="badge">${item.room_type}</span></td>
+              <td>${item.check_in} — ${item.check_out}</td>
+              <td><b>${Number(item.total_price).toLocaleString('ru-RU')} ₽</b></td>
+              <td>
+                <button class="btn-delete-item" onclick="deleteBooking(${item.id})">Удалить</button>
+              </td>
+            </tr>
+          `;
+        });
+      } catch (err) {
+        alert('Ошибка при получении журнала: ' + err.message);
+      }
+    }
+
+    async function deleteBooking(id) {
+      if (!confirm(`Удалить запись брони #${id}?`)) return;
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/bookings/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          loadBookings();
+          const bar = document.getElementById('statsBar');
+          if (bar.style.display === 'block') loadStats();
+        } else {
+          alert('Ошибка при удалении');
+        }
+      } catch (err) {
+        alert('Ошибка сети: ' + err.message);
+      }
+    }
+
+    async function loadStats() {
+      const bar = document.getElementById('statsBar');
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/stats`);
+        const stats = await res.json();
+        bar.style.display = 'block';
+        bar.innerHTML = `
+          Финансовые показатели: 
+          Оформлено броней: <b>${stats.total_count} шт.</b> | 
+          Общий оборот: <b>${stats.total_revenue.toLocaleString('ru-RU')} ₽</b> | 
+          Средний чек: <b>${stats.avg_price.toLocaleString('ru-RU')} ₽</b>
+        `;
+      } catch (err) {
+        alert('Не удалось рассчитать статистику: ' + err.message);
+      }
+    }
+
+    function showStatus(text, type = 'info') {
+      const s = document.getElementById('bookingStatus');
+      s.style.display = 'block';
+      if (type === 'success') {
+        s.style.background = '#dcfce7';
+        s.style.color = '#15803d';
+        s.style.border = '1px solid #bbf7d0';
+      } else if (type === 'error') {
+        s.style.background = '#fee2e2';
+        s.style.color = '#b91c1c';
+        s.style.border = '1px solid #fecaca';
+      } else {
+        s.style.background = '#e0f2fe';
+        s.style.color = '#0369a1';
+        s.style.border = '1px solid #bae6fd';
+      }
+      s.innerHTML = text;
+    }
+
+    // Запрос к Web-сервису расчета цен (Кнопка 2 по заданию)
+    async function calculateEstimate() {
+      const hotelId = parseInt(document.getElementById('selectedHotel').value);
+      const roomType = document.getElementById('roomType').value;
+      const checkIn = document.getElementById('checkIn').value;
+      const checkOut = document.getElementById('checkOut').value;
+
+      if (!checkIn || !checkOut) {
+        showStatus('Выберите даты заезда и выезда для расчета.', 'error');
+        return;
+      }
+
+      showStatus('Выполняется расчет стоимости...', 'info');
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/estimate`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            hotel_id: hotelId,
+            room_type: roomType,
+            check_in: checkIn,
+            check_out: checkOut
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          showStatus(`
+            <b>Предварительный расчет:</b><br>
+            • Отель: <b>${data.hotel_name}</b><br>
+            • Количество ночей: <b>${data.nights}</b> (тариф: ${data.rate_per_night.toLocaleString('ru-RU')} ₽/ночь)<br>
+            • Итоговая стоимость: <b style="font-size:16px; color:#15803d;">${data.total_price.toLocaleString('ru-RU')} ₽</b>
+          `, 'success');
+        } else {
+          showStatus('Ошибка: ' + (data.detail || 'Не удалось выполнить расчет'), 'error');
+        }
+      } catch (err) {
+        showStatus('Ошибка сети: ' + err.message, 'error');
+      }
+    }
+
+    // Сохранение бронирования в БД
+    async function submitBooking() {
+      const payload = {
+        hotel_id: parseInt(document.getElementById('selectedHotel').value),
+        guest_name: document.getElementById('guestName').value.trim(),
+        room_type: document.getElementById('roomType').value,
+        check_in: document.getElementById('checkIn').value,
+        check_out: document.getElementById('checkOut').value
+      };
+
+      if (!payload.guest_name || !payload.check_in || !payload.check_out) {
+        showStatus('Заполните обязательные поля.', 'error');
+        return;
+      }
+
+      showStatus('Сохранение бронирования...', 'info');
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/bookings`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          showStatus(`
+            <b>Бронирование успешно оформлено!</b><br>
+            Отель: <b>${data.hotel_name}</b> | Сумма: <b>${Number(data.total_price).toLocaleString('ru-RU')} ₽</b>
+          `, 'success');
+        } else {
+          showStatus('Ошибка: ' + (data.detail || 'Не удалось оформить бронь'), 'error');
+        }
+      } catch (err) {
+        showStatus('Ошибка сети: ' + err.message, 'error');
+      }
+    }
+
+    window.onload = () => {
+      loadHotels();
+      loadBookings();
+    };
+  </script>
+</body>
+</html>

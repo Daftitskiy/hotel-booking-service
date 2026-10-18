@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Управление отелями</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --danger: #dc2626;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 30px 15px;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .btn-nav {
+      background: #475569;
+      color: white;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .card {
+      background: var(--card-bg);
+      padding: 24px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      margin-bottom: 24px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    label { font-size: 13px; font-weight: 600; margin-bottom: 6px; display: block; }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    textarea { resize: vertical; min-height: 80px; }
+    .btn-submit {
+      background: #16a34a;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-submit:hover { background: #15803d; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 10px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background: #f1f5f9; }
+    .btn-delete {
+      background: var(--danger);
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #statusMsg {
+      margin-top: 14px;
+      font-weight: 600;
+      padding: 10px;
+      border-radius: 6px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h2 style="margin: 0;">Управление отелями</h2>
+        <small style="color: #64748b;">Редактирование каталога в базе данных</small>
+      </div>
+      <a href="index.html" class="btn-nav">← К витрине</a>
+    </header>
+
+    <div class="card">
+      <h3 style="margin-top:0;">Добавить новый отель</h3>
+      <div>
+        <div class="form-grid">
+          <div>
+            <label>Название отеля:</label>
+            <input type="text" id="name" placeholder="Например: Radisson Blu" required>
+          </div>
+          <div>
+            <label>Город:</label>
+            <input type="text" id="city" placeholder="Например: Казань" required>
+          </div>
+          <div>
+            <label>Звёзды (1-5):</label>
+            <select id="stars">
+              <option value="3">⭐⭐⭐ (3 звезды)</option>
+              <option value="4" selected>⭐⭐⭐⭐ (4 звезды)</option>
+              <option value="5">⭐⭐⭐⭐⭐ (5 звёзд)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div>
+            <label>Цена за Standard (₽/сутки):</label>
+            <input type="number" id="priceStandard" placeholder="3500" required>
+          </div>
+          <div>
+            <label>Цена за Deluxe (₽/сутки):</label>
+            <input type="number" id="priceDeluxe" placeholder="6000" required>
+          </div>
+          <div>
+            <label>Цена за Suite (₽/сутки):</label>
+            <input type="number" id="priceSuite" placeholder="11000" required>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <label>URL Фотографии:</label>
+          <input type="url" id="imageUrl" value="https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=600&q=80">
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <label>Описание:</label>
+          <textarea id="description" required>Современный отель со спа-комплексом и панорамным рестораном на крыше.</textarea>
+        </div>
+
+        <button type="button" class="btn-submit" onclick="addHotel()">Сохранить отель</button>
+      </div>
+      <div id="statusMsg"></div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0;">Список отелей</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Название</th>
+            <th>Город</th>
+            <th>Тарифы (Std / Dlx / Ste)</th>
+            <th>Действие</th>
+          </tr>
+        </thead>
+        <tbody id="hotelsTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const BACKEND_URL = 'http://localhost:8000';
+
+    async function loadHotels() {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/hotels`);
+        const hotels = await res.json();
+        const tbody = document.getElementById('hotelsTableBody');
+        tbody.innerHTML = '';
+        hotels.forEach(h => {
+          tbody.innerHTML += `
+            <tr>
+              <td>#${h.id}</td>
+              <td><b>${h.name}</b> ${'⭐'.repeat(h.stars)}</td>
+              <td>${h.city}</td>
+              <td>${h.price_standard} / ${h.price_deluxe} / ${h.price_suite} ₽</td>
+              <td>
+                <button class="btn-delete" onclick="deleteHotel(${h.id})">Удалить</button>
+              </td>
+            </tr>
+          `;
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function addHotel() {
+      const msg = document.getElementById('statusMsg');
+      const name = document.getElementById('name').value.trim();
+      const city = document.getElementById('city').value.trim();
+      const priceStandard = parseFloat(document.getElementById('priceStandard').value);
+      const priceDeluxe = parseFloat(document.getElementById('priceDeluxe').value);
+      const priceSuite = parseFloat(document.getElementById('priceSuite').value);
+      const imageUrl = document.getElementById('imageUrl').value.trim();
+      const description = document.getElementById('description').value.trim();
+
+      if (!name || !city || isNaN(priceStandard) || isNaN(priceDeluxe) || isNaN(priceSuite) || !description) {
+        msg.style.display = 'block';
+        msg.style.background = '#fee2e2';
+        msg.style.color = '#dc2626';
+        msg.innerText = 'Заполните поля корректными данными.';
+        return;
+      }
+
+      const payload = {
+        name: name,
+        city: city,
+        stars: parseInt(document.getElementById('stars').value),
+        price_standard: priceStandard,
+        price_deluxe: priceDeluxe,
+        price_suite: priceSuite,
+        image_url: imageUrl || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80',
+        description: description
+      };
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/hotels`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          msg.style.display = 'block';
+          msg.style.background = '#dcfce7';
+          msg.style.color = '#16a34a';
+          msg.innerText = 'Отель успешно добавлен!';
+          loadHotels();
+          document.getElementById('name').value = '';
+          document.getElementById('city').value = '';
+          document.getElementById('priceStandard').value = '';
+          document.getElementById('priceDeluxe').value = '';
+          document.getElementById('priceSuite').value = '';
+        } else {
+          const err = await res.json();
+          msg.style.display = 'block';
+          msg.style.background = '#fee2e2';
+          msg.style.color = '#dc2626';
+          msg.innerText = 'Ошибка: ' + (err.detail || 'Не удалось сохранить');
+        }
+      } catch (err) {
+        msg.style.display = 'block';
+        msg.style.background = '#fee2e2';
+        msg.style.color = '#dc2626';
+        msg.innerText = 'Ошибка сети: ' + err.message;
+      }
+    }
+
+    async function deleteHotel(id) {
+      if (!confirm(`Удалить отель #${id}?`)) return;
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/hotels/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          loadHotels();
+        } else {
+          alert('Ошибка при удалении отеля');
+        }
+      } catch (err) {
+        alert('Ошибка сети: ' + err.message);
+      }
+    }
+
+    window.onload = loadHotels;
+  </script>
+</body>
+</html>

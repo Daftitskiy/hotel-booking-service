@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: hotel_db
+    environment:
+      POSTGRES_DB: hotel_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secretpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d hotel_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web-service:
+    build: ./web-service
+    container_name: hotel_calculator
+    restart: on-failure
+    ports:
+      - "5000:5000"
+
+  backend:
+    build: ./backend
+    container_name: hotel_backend
+    environment:
+      DB_HOST: db
+      DB_NAME: hotel_db
+      DB_USER: postgres
+      DB_PASSWORD: secretpassword
+      WEB_SERVICE_URL: http://web-service:5000
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      web-service:
+        condition: service_started
+
+  frontend:
+    build: ./frontend
+    container_name: hotel_frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
